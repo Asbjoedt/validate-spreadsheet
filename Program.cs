@@ -67,6 +67,17 @@ class Program
         bool success = false;
         using (var spreadsheet = SpreadsheetDocument.Open(filepath, false))
         {
+            // Check for conformance
+            bool? strict = spreadsheet.StrictRelationshipFound;
+            if (strict == true)
+            {
+                Console.WriteLine($"--> File format is Strict conformant");
+            }
+            else
+            {
+                Console.WriteLine($"--> File format is Transitional conformant");
+            }
+
             // Validate
             var validator = new OpenXmlValidator();
             var validation_errors = validator.Validate(spreadsheet).ToList();
