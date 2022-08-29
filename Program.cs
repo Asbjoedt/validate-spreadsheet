@@ -10,7 +10,7 @@ class Program
 {
     public static string new_filepath = "";
 
-    bool? Main(string[] args)
+    bool Main(string[] args)
     {
         string filepath = args[0];
         string extension = Path.GetExtension(filepath);
