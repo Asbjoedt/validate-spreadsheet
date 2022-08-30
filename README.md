@@ -1,7 +1,7 @@
 # validate-spreadsheets
 The program validates any .xlsx or .ods spreadsheet filepaths according to the their file format standards and according to [archival data quality specifications](https://github.com/Asbjoedt/CLISC/wiki/Archival-Data-Quality). It can be used in simple archival workflows.
 
-* For more information, see repository [CLISC](https://github.com/Asbjoedt/CLISC)
+* For more information, see repository **[CLISC](https://github.com/Asbjoedt/CLISC)**
 
 ## Dependencies
 :warning: **[ODF Validator](https://odftoolkit.org/conformance/ODFValidator.html)**
