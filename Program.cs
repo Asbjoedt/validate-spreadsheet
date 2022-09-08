@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using DocumentFormat.OpenXml.Packaging;
@@ -14,45 +15,64 @@ class Program
     {
         string filepath = args[0];
         string extension = Path.GetExtension(filepath);
-        bool success = true;
-        bool fileFormat_success = true;
-        bool archivalReq_success = true;
+        bool success = false;
+        bool fileFormat_success = false;
+        bool archivalReq_success = false;
 
         try
         {
             switch (extension) // The switch includes all accepted file extensions
             {
                 case ".fods":
-                case ".ods":
-                case ".ots":
                 case ".FODS":
+                case ".ods":
                 case ".ODS":
+                case ".ots":
                 case ".OTS":
                     Console.WriteLine(filepath);
-                    fileFormat_success = Validate_XLSX(filepath);
-                    if (fileFormat_success == false)
-                    {
-                        success = false;
-                    }
-                    return success;
-                case ".xlsb":
-                case ".xlsm":
-                case ".xlsx":
-                case ".xltm":
-                case ".xltx":
-                case ".XLSB":
-                case ".XLSM":
-                case ".XLSX":
-                case ".XLTM":
-                case ".XLTX":
-                    Console.WriteLine(filepath);
-                    fileFormat_success = Validate_XLSX(filepath);
-                    archivalReq_success = Validate_ArchivalRequirements_XLSX(filepath);
+
+                    fileFormat_success = Validate_OpenDocument(filepath);
+                    archivalReq_success = Validate_ArchivalRequirements_ODS(filepath);
+
                     if (fileFormat_success == false || archivalReq_success == false)
                     {
                         success = false;
+                        return success;
+                    }
+                    else if (fileFormat_success == true && archivalReq_success == true)
+                    {
+                        success = true;
+                        return success;
                     }
                     return success;
+
+                case ".xlsb":
+                case ".XLSB":
+                case ".xlsm":
+                case ".XLSM":
+                case ".xlsx":
+                case ".XLSX":
+                case ".xltm":
+                case ".XLTM":
+                case ".xltx":
+                case ".XLTX":
+                    Console.WriteLine(filepath);
+
+                    fileFormat_success = Validate_XLSX(filepath);
+                    archivalReq_success = Validate_ArchivalRequirements_XLSX(filepath);
+
+                    if (fileFormat_success == false || archivalReq_success == false)
+                    {
+                        success = false;
+                        return success;
+                    }
+                    else if (fileFormat_success == true && archivalReq_success == true)
+                    {
+                        success = true;
+                        return success;
+                    }
+                    return success;
+
                 default:
                     Console.WriteLine("File format is not an accepted file format");
                     success = false;
@@ -75,7 +95,8 @@ class Program
 
     static bool Validate_XLSX(string filepath)
     {
-        bool success = true;
+        bool success = false;
+
         using (var spreadsheet = SpreadsheetDocument.Open(filepath, false))
         {
             // Check for conformance
@@ -114,14 +135,15 @@ class Program
                     }
                 }
                 success = false;
+                return success;
             }
             else
             {
                 Console.WriteLine($"--> File format is valid");
                 success = true;
+                return success;
             }
         }
-        return success;
     }
 
     // Validate archival requirements (XLSX)
@@ -133,41 +155,49 @@ class Program
         if (data == true)
         {
             success = false;
+            return success;
         }
         int conn = Check_DataConnections(filepath);
         if (conn > 0)
         {
             success = false;
+            return success;
         }
         int cellrefs = Check_CellReferences(filepath);
         if (cellrefs > 0)
         {
             success = false;
+            return success;
         }
         int extobjs = Check_ExternalObjects(filepath);
         if (extobjs > 0)
         {
             success = false;
+            return success;
         }
         int rtdfunctions = Check_RTDFunctions(filepath);
         if (rtdfunctions > 0)
         {
             success = false;
+            return success;
         }
         int embedobjs = Check_EmbeddedObjects(filepath);
         if (embedobjs > 0)
         {
             success = false;
+            return success;
         }
         int printersettings = Check_PrinterSettings(filepath);
         if (printersettings > 0)
         {
             success = false;
+            return success;
         }
         bool activesheet = Check_ActiveSheet(filepath);
         if (activesheet == true)
         {
             success = false;
+            return success;
         }
         return success;
     }
@@ -437,6 +467,7 @@ class Program
     static bool Validate_ODS(string filepath)
     {
         bool success = false;
+
         Process app = new Process();
         string? dir = null;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // If app is run on Windows
@@ -460,7 +491,62 @@ class Program
             success = true;
         }
         app.Close();
+
         return success;
+    }
+
+    public bool Validate_OpenDocument(string filepath)
+    {
+        bool valid = false;
+
+        try
+        {
+            // Use ODF Validator for validation of OpenDocument spreadsheets
+            Process app = new Process();
+            app.StartInfo.UseShellExecute = false;
+            app.StartInfo.FileName = "javaw";
+            string normal_dir = "C:\\Program Files\\ODF Validator\\odfvalidator-0.10.0-jar-with-dependencies.jar";
+            string? environ_dir = null;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // If app is run on Windows
+            {
+                environ_dir = Environment.GetEnvironmentVariable("ODFValidator");
+            }
+            if (environ_dir != null)
+            {
+                app.StartInfo.Arguments = $"-jar \"{environ_dir}\" \"{filepath}\"";
+            }
+            else
+            {
+                app.StartInfo.Arguments = $"-jar \"{normal_dir}\" \"{filepath}\"";
+            }
+            app.Start();
+            app.WaitForExit();
+            int return_code = app.ExitCode;
+            app.Close();
+
+            // Inform user of validation results
+            if (return_code == 0)
+            {
+                Console.WriteLine("--> File format is invalid. Spreadsheet has no cell values");
+                valid = false;
+            }
+            if (return_code == 1)
+            {
+                Console.WriteLine("--> File format validation could not be completed");
+                valid = false;
+            }
+            if (return_code == 2)
+            {
+                Console.WriteLine("--> File format is valid");
+                valid = true;
+            }
+            return valid;
+        }
+        catch (Win32Exception)
+        {
+            Console.WriteLine("--> File format validation requires ODF Validator and Java Development Kit");
+            return valid;
+        }
     }
 
     public bool Validate_ArchivalRequirements_ODS(string filepath)
