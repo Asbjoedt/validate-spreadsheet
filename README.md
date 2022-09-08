@@ -4,10 +4,10 @@ The program validates any .xlsx or .ods spreadsheet filepaths according to the t
 * For more information, see repository **[CLISC](https://github.com/Asbjoedt/CLISC)**
 
 ## Dependencies
-:warning: **[ODF Validator](https://odftoolkit.org/conformance/ODFValidator.html)**
-
-ODF Validator is used for validating OpenDocument Spreadsheets file format (.ods).
-
+:warning: **[ODF Validator 0.10.0](https://odftoolkit.org/conformance/ODFValidator.html)**
+* ODF Validator is used for validating OpenDocument Spreadsheets file format (.ods).
+* You need to install program in "C:\Program Files\ODF Validator" and name program "odfvalidator-0.10.0-jar-with-dependencies.jar", or create environment variable "ODFValidator" with path to your installation
+* ODF Validator needs latest version of Java Development Kit installed
 
 ## How to use
 Download the executable version [here](https://github.com/Asbjoedt/validate-spreadsheets/releases). There's no need to install. In your terminal change directory to the folder where validate-spreadsheets.exe is. Then, to execute the program input:
@@ -17,5 +17,5 @@ Download the executable version [here](https://github.com/Asbjoedt/validate-spre
 
 ## Packages and software
 The following packages and software are used under license.
+* [ODF Validator 0.10.0](https://odftoolkit.org/conformance/ODFValidator.html), Apache License, [copyright info](https://github.com/tdf/odftoolkit/blob/master/NOTICE)
 * [Open XML SDK](https://github.com/OfficeDev/Open-XML-SDK), MIT License, Copyright (c) Microsoft Corporation
-* [ODF Validator](https://odftoolkit.org/conformance/ODFValidator.html), Apache License, [copyright info](https://github.com/tdf/odftoolkit/blob/master/NOTICE)
