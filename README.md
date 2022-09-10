@@ -3,6 +3,8 @@ The program validates any .xlsx or .ods spreadsheet filepaths according to the t
 
 * For more information, see repository **[CLISC](https://github.com/Asbjoedt/CLISC)**
 
+**Important!** The program supports validation of .xlsx file format standard and archival data quality specifications. For ods. the program currently only supports validation of file format standard. I am looking into how to support validation of archival data quality specifications.
+
 ## Dependencies
 :warning: **[ODF Validator 0.10.0](https://odftoolkit.org/conformance/ODFValidator.html)**
 * ODF Validator is used for validating OpenDocument Spreadsheets file format (.ods).
