@@ -5,6 +5,13 @@ The program validates any .xlsx or .ods spreadsheet filepath according to the th
 
 **Important!** The program supports validation of .xlsx file format standard and archival data quality specifications. For ods. the program currently only supports validation of file format standard. I am looking into how to support validation of archival data quality specifications.
 
+## Return codes
+The program writes information to the console and it also returns a code to integrate in workflows.
+
+* 0 = spreadsheet is invalid
+* 1 = spreadsheet is valid
+* 2 = program error occured (e.g. file format is not a spreadsheet file format or ODF Validator was not found)
+
 ## Dependencies
 :warning: **[ODF Validator 0.10.0](https://odftoolkit.org/conformance/ODFValidator.html)**
 * ODF Validator is used for validating OpenDocument Spreadsheets file format (.ods).
@@ -12,7 +19,7 @@ The program validates any .xlsx or .ods spreadsheet filepath according to the th
 * ODF Validator needs latest version of Java Development Kit installed
 
 ## How to use
-Download the executable version [here](https://github.com/Asbjoedt/validate-spreadsheets/releases). There's no need to install. In your terminal change directory to the folder where validate-spreadsheet.exe is. Then, to execute the program input:
+Download the executable version [here](https://github.com/Asbjoedt/validate-spreadsheet/releases). There's no need to install. In your terminal change directory to the folder where validate-spreadsheet.exe is. Then, to execute the program input:
 ```
 .\validate-spreadsheet.exe "[filepath]"
 ```
