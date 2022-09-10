@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -9,13 +10,13 @@ using DocumentFormat.OpenXml.Validation;
 
 class Program
 {
-    public static string new_filepath = "";
-
-    bool Main(string[] args)
+    public static int Main(string[] args)
     {
         string filepath = args[0];
-        string extension = Path.GetExtension(filepath);
-        bool success = false;
+        string extension = System.IO.Path.GetExtension(filepath);
+        int invalid = 0;
+        int valid = 1;
+        int fail = 2;
         bool fileFormat_success = false;
         bool archivalReq_success = false;
 
@@ -29,22 +30,48 @@ class Program
                 case ".ODS":
                 case ".ots":
                 case ".OTS":
+                    // Inform user of input filepath
+                    Console.WriteLine("---");
+                    Console.WriteLine("VALIDATE");
                     Console.WriteLine(filepath);
 
-                    fileFormat_success = Validate_OpenDocument(filepath);
+                    // Validate file format standard
+                    fileFormat_success = Validate_Standard_ODS(filepath);
+
+                    // Validate archival data quality specifications
                     archivalReq_success = Validate_ArchivalRequirements_ODS(filepath);
 
+                    // Inform user of results
+                    Console.WriteLine("---");
+                    Console.WriteLine("SUMMARY");
+                    if (fileFormat_success == false)
+                    {
+                        Console.WriteLine("--> File format standard: Invalid");
+                    }
+                    else if (fileFormat_success == true)
+                    {
+                        Console.WriteLine("--> File format standard: Valid");
+                    }
+
+                    if (archivalReq_success == false)
+                    {
+                        Console.WriteLine("--> Archival requirements: Invalid");
+                    }
+                    else if (archivalReq_success == true)
+                    {
+                        Console.WriteLine("--> Archival requirements: Valid");
+                    }
+
+                    // Return validation code
                     if (fileFormat_success == false || archivalReq_success == false)
                     {
-                        success = false;
-                        return success;
+                        return invalid;
                     }
                     else if (fileFormat_success == true && archivalReq_success == true)
                     {
-                        success = true;
-                        return success;
+                        return valid;
                     }
-                    return success;
+                    return fail;
 
                 case ".xlsb":
                 case ".XLSB":
@@ -56,60 +83,77 @@ class Program
                 case ".XLTM":
                 case ".xltx":
                 case ".XLTX":
+                    // Inform user of input filepath
+                    Console.WriteLine("---");
+                    Console.WriteLine("VALIDATE");
                     Console.WriteLine(filepath);
 
-                    fileFormat_success = Validate_XLSX(filepath);
+                    // Validate file format standard
+                    fileFormat_success = Validate_Standard_XLSX(filepath);
+
+                    // Validate archival data quality specifications
                     archivalReq_success = Validate_ArchivalRequirements_XLSX(filepath);
 
+                    // Inform user of results
+                    Console.WriteLine("---");
+                    Console.WriteLine("SUMMARY");
+                    if (fileFormat_success == false)
+                    {
+                        Console.WriteLine("--> File format standard: Invalid");
+                    }
+                    else if (fileFormat_success == true)
+                    {
+                        Console.WriteLine("--> File format standard: Valid");
+                    }
+
+                    if (archivalReq_success == false)
+                    {
+                        Console.WriteLine("--> Archival requirements: Invalid");
+                    }
+                    else if (archivalReq_success == true)
+                    {
+                        Console.WriteLine("--> Archival requirements: Valid");
+                    }
+
+                    // Return validation code
                     if (fileFormat_success == false || archivalReq_success == false)
                     {
-                        success = false;
-                        return success;
+                        Console.WriteLine("--> Spreadsheet is invalid");
+                        return invalid;
                     }
                     else if (fileFormat_success == true && archivalReq_success == true)
                     {
-                        success = true;
-                        return success;
+                        Console.WriteLine("--> Spreadsheet is valid");
+                        return valid;
                     }
-                    return success;
+                    return fail;
 
                 default:
                     Console.WriteLine("File format is not an accepted file format");
-                    success = false;
-                    return success;
+                    return fail;
             }
         }
         catch (FileNotFoundException) // If filepath has not file
         {
             Console.WriteLine("No file in filepath");
-            success = false;
-            return success;
+            return fail;
         }
         catch (FormatException) // If spreadsheet is password protected or otherwise unreadable
         {
             Console.WriteLine("File cannot be read");
-            success = false;
-            return success;
+            return fail;
         }
     }
 
-    static bool Validate_XLSX(string filepath)
+    static bool Validate_Standard_XLSX(string filepath)
     {
         bool success = false;
 
+        Console.WriteLine("---");
+        Console.WriteLine("FILE FORMAT STANDARD");
+
         using (var spreadsheet = SpreadsheetDocument.Open(filepath, false))
         {
-            // Check for conformance
-            bool? strict = spreadsheet.StrictRelationshipFound;
-            if (strict == true)
-            {
-                Console.WriteLine($"--> File format is Strict conformant");
-            }
-            else
-            {
-                Console.WriteLine($"--> File format is Transitional conformant");
-            }
-
             // Validate
             var validator = new OpenXmlValidator();
             var validation_errors = validator.Validate(spreadsheet).ToList();
@@ -117,7 +161,7 @@ class Program
             int error_number = 0;
             if (validation_errors.Any()) // If errors, inform user & return results
             {
-                Console.WriteLine($"--> File format is invalid - Spreadsheet has {error_count} validation errors");
+                Console.WriteLine($"--> File format has {error_count} validation errors");
                 foreach (var error in validation_errors)
                 {
                     error_number++;
@@ -139,7 +183,7 @@ class Program
             }
             else
             {
-                Console.WriteLine($"--> File format is valid");
+                Console.WriteLine("--> Spreadsheet is compliant with file format standard");
                 success = true;
                 return success;
             }
@@ -147,63 +191,67 @@ class Program
     }
 
     // Validate archival requirements (XLSX)
-    public bool Validate_ArchivalRequirements_XLSX(string filepath)
+    static bool Validate_ArchivalRequirements_XLSX(string filepath)
     {
-        bool success = true;
+        bool success = false;
+
+        Console.WriteLine("---");
+        Console.WriteLine("ARCHIVAL REQUIREMENTS");
+
+        bool strict = Check_Strict(filepath);
 
         bool data = Check_Value(filepath);
-        if (data == true)
-        {
-            success = false;
-            return success;
-        }
+
         int conn = Check_DataConnections(filepath);
-        if (conn > 0)
-        {
-            success = false;
-            return success;
-        }
+
         int cellrefs = Check_CellReferences(filepath);
-        if (cellrefs > 0)
-        {
-            success = false;
-            return success;
-        }
+
         int extobjs = Check_ExternalObjects(filepath);
-        if (extobjs > 0)
-        {
-            success = false;
-            return success;
-        }
+
         int rtdfunctions = Check_RTDFunctions(filepath);
-        if (rtdfunctions > 0)
-        {
-            success = false;
-            return success;
-        }
+
         int embedobjs = Check_EmbeddedObjects(filepath);
-        if (embedobjs > 0)
-        {
-            success = false;
-            return success;
-        }
+
         int printersettings = Check_PrinterSettings(filepath);
-        if (printersettings > 0)
-        {
-            success = false;
-            return success;
-        }
+
         bool activesheet = Check_ActiveSheet(filepath);
-        if (activesheet == true)
+
+        if (strict == true && data == true && conn == 0 && cellrefs == 0 && extobjs == 0 && rtdfunctions == 0 && embedobjs == 0 && printersettings == 0 && activesheet == false)
+        {
+            success = true;
+            return success;
+        }
+        else
         {
             success = false;
             return success;
         }
-        return success;
+    }
+
+    // Check for Strict conformance
+    static bool Check_Strict(string filepath)
+    {
+        bool strict = false;
+
+        using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(filepath, false))
+        {
+            Workbook workbook = spreadsheet.WorkbookPart.Workbook;
+            if (workbook.Conformance == "strict")
+            {
+                Console.WriteLine("--> Spreadsheet is Strict conformant");
+                strict = true;
+            }
+            else if (workbook.Conformance == null || workbook.Conformance == "transitional")
+            {
+                Console.WriteLine("--> Spreadsheet is Transitional conformant (Error)");
+                strict = false;
+            }
+        }
+        return strict;
     }
 
     // Check for any values by checking if sheets and cell values exist
-    public bool Check_Value(string filepath)
+    static bool Check_Value(string filepath)
     {
         bool hascellvalue = false;
 
@@ -227,6 +275,7 @@ class Program
                 if (row_count > 0) // If any rows exist, this means cells exist
                 {
                     hascellvalue = true;
+                    Console.WriteLine("--> Cell values detected");
                     return hascellvalue;
                 }
             }
@@ -236,7 +285,7 @@ class Program
     }
 
     // Check for data connections
-    public int Check_DataConnections(string filepath)
+    static int Check_DataConnections(string filepath)
     {
         int conn_count = 0;
 
@@ -246,14 +295,14 @@ class Program
             if (conn != null)
             {
                 conn_count = conn.Connections.Count();
-                Console.WriteLine($"--> {conn_count} data connections detected and removed");
             }
         }
+        Console.WriteLine($"--> {conn_count} data connections detected");
         return conn_count;
     }
 
     // Check for external relationships
-    public int Check_CellReferences(string filepath) // Find all external relationships
+    static int Check_CellReferences(string filepath) // Find all external relationships
     {
         int cellreferences_count = 0;
 
@@ -287,15 +336,12 @@ class Program
                 }
             }
         }
-        if (cellreferences_count > 0)
-        {
-            Console.WriteLine($"--> {cellreferences_count} external cell references detected and removed");
-        }
+        Console.WriteLine($"--> {cellreferences_count} external cell references detected");
         return cellreferences_count;
     }
 
     // Check for external object references
-    public int Check_ExternalObjects(string filepath)
+    static int Check_ExternalObjects(string filepath)
     {
         int extobj_count = 0;
 
@@ -321,15 +367,12 @@ class Program
                 }
             }
         }
-        if (extobj_count > 0)
-        {
-            Console.WriteLine($"--> {extobj_count} external objects detected and removed");
-        }
+        Console.WriteLine($"--> {extobj_count} external objects detected");
         return extobj_count;
     }
 
     // Check for RTD functions
-    public static int Check_RTDFunctions(string filepath) // Check for RTD functions
+    static int Check_RTDFunctions(string filepath) // Check for RTD functions
     {
         int rtd_functions_count = 0;
 
@@ -364,11 +407,12 @@ class Program
                 }
             }
         }
+        Console.WriteLine($"--> {rtd_functions_count} RTD functions detected");
         return rtd_functions_count;
     }
 
     // Check for embedded objects
-    public int Check_EmbeddedObjects(string filepath) // Check for embedded objects and return alert
+    static int Check_EmbeddedObjects(string filepath) // Check for embedded objects and return alert
     {
         int embedobj_count = 0;
 
@@ -414,11 +458,12 @@ class Program
                 }
             }
         }
+        Console.WriteLine($"--> {embedobj_count} embedded objects detected");
         return embedobj_count;
     }
 
     // Check for printer settings
-    public int Check_PrinterSettings(string filepath)
+    static int Check_PrinterSettings(string filepath)
     {
         int printersettings_count = 0;
 
@@ -434,16 +479,13 @@ class Program
             {
                 printersettings_count++;
             }
-            if (printerList.Count > 0)
-            {
-                Console.WriteLine($"--> {printersettings_count} printersettings detected and removed");
-            }
         }
+        Console.WriteLine($"--> {printersettings_count} printersettings detected");
         return printersettings_count;
     }
 
     // Check for active sheet
-    public bool Check_ActiveSheet(string filepath)
+    static bool Check_ActiveSheet(string filepath)
     {
         bool activeSheet = false;
 
@@ -456,11 +498,13 @@ class Program
                 var activeSheetId = workbookView.ActiveTab.Value;
                 if (activeSheetId > 0)
                 {
-                    Console.WriteLine("--> First sheet is not active sheet detected and changed");
+                    Console.WriteLine("--> First sheet is not active sheet detected");
                     activeSheet = true;
+                    return activeSheet;
                 }
             }
         }
+        Console.WriteLine("--> First sheet is active sheet detected");
         return activeSheet;
     }
 
@@ -495,7 +539,7 @@ class Program
         return success;
     }
 
-    public bool Validate_OpenDocument(string filepath)
+    static bool Validate_Standard_ODS(string filepath)
     {
         bool valid = false;
 
@@ -549,7 +593,7 @@ class Program
         }
     }
 
-    public bool Validate_ArchivalRequirements_ODS(string filepath)
+    static bool Validate_ArchivalRequirements_ODS(string filepath)
     {
         bool success = true;
 
