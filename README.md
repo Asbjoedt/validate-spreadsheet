@@ -20,17 +20,17 @@ Download the executable version [here](https://github.com/Asbjoedt/validate-spre
 **Optional parameters**
 
 ```
---standard // If you want to validate the file format standard
---archivalrequirements // If you want to validate archival data quality specifications
+--standard //If you want to validate the file format standard
+--archivalrequirements //If you want to validate archival data quality specifications
 ```
 
 **Exit codes**
 
-The program writes information to the terminal and it also returns an exit code to integrate in workflows.
+The program writes information to the terminal and it returns an exit code to integrate in your workflows.
 ```
 0 = spreadsheet is invalid
 1 = spreadsheet is valid
-2 = program error occured (e.g. unacceptable file format or ODF Validator was not found)
+2 = program error occured (e.g. unsupported file format or ODF Validator was not found)
 ```
 
 ## Packages and software
