@@ -11,6 +11,7 @@ namespace Validate.Spreadsheet
         public bool Validate_ArchivalRequirements(string filepath)
         {
             bool success = false;
+            Console.WriteLine("Validating archival requirements");
             Console.WriteLine("Validation of ODS archival requirements are currently not supported");
             return success;
         }

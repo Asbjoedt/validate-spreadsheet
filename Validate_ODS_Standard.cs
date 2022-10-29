@@ -15,6 +15,8 @@ namespace Validate.Spreadsheet
         {
             bool validity = false;
 
+            Console.WriteLine("Validating file format standard: OpenDocument Spreadsheet");
+
             try
             {
                 // Use ODF Validator for validation of OpenDocument spreadsheets
@@ -43,24 +45,24 @@ namespace Validate.Spreadsheet
                 // Inform user of validation results
                 if (return_code == 0)
                 {
-                    Console.WriteLine("--> File format is invalid. Spreadsheet has no cell values");
+                    Console.WriteLine("File format standard: Invalid. Spreadsheet has no cell values");
                     validity = false;
                 }
                 if (return_code == 1)
                 {
-                    Console.WriteLine("--> File format validation could not be completed");
+                    Console.WriteLine("File format standard validation could not be completed");
                     validity = false;
                 }
                 if (return_code == 2)
                 {
-                    Console.WriteLine("--> File format is valid");
+                    Console.WriteLine("File format standard: Valid");
                     validity = true;
                 }
                 return validity;
             }
             catch (Win32Exception)
             {
-                Console.WriteLine("--> File format validation requires ODF Validator and Java Development Kit");
+                Console.WriteLine("File format standard validation requires ODF Validator and Java Development Kit");
                 return validity;
             }
         }

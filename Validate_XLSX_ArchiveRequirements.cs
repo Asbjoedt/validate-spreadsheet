@@ -14,56 +14,51 @@ namespace Validate.Spreadsheet
         {
             bool success = false;
 
-            Console.WriteLine("---");
-            Console.WriteLine("ARCHIVAL REQUIREMENTS");
+            // Inform user
+            Console.WriteLine("Validating archival requirements");
 
-            bool strict = Check_Strict(filepath);
-
+            // Perform checks
+            bool strict = Check_Conformance(filepath);
             bool data = Check_Value(filepath);
-
             int conn = Check_DataConnections(filepath);
-
             int cellrefs = Check_CellReferences(filepath);
-
             int extobjs = Check_ExternalObjects(filepath);
-
             int rtdfunctions = Check_RTDFunctions(filepath);
-
-            int embedobjs = Check_EmbeddedObjects(filepath);
-
             int printersettings = Check_PrinterSettings(filepath);
-
             bool activesheet = Check_ActiveSheet(filepath);
+            //int embedobjs = Check_EmbeddedObjects(filepath);
 
-            if (strict == true && data == true && conn == 0 && cellrefs == 0 && extobjs == 0 && rtdfunctions == 0 && embedobjs == 0 && printersettings == 0 && activesheet == false)
+            // Return success
+            if (strict == true && data == true && conn == 0 && cellrefs == 0 && extobjs == 0 && rtdfunctions == 0 && printersettings == 0 && activesheet == false)
             {
+                Console.WriteLine("Archival requirements: Valid");
                 success = true;
                 return success;
             }
             else
             {
+                Console.WriteLine("Archival requirements: Invalid");
                 success = false;
                 return success;
             }
         }
 
         // Check for Strict conformance
-        static bool Check_Strict(string filepath)
+        static bool Check_Conformance(string filepath)
         {
             bool strict = false;
 
             using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(filepath, false))
             {
                 Workbook workbook = spreadsheet.WorkbookPart.Workbook;
-                if (workbook.Conformance == "strict")
+                if (workbook.Conformance == null || workbook.Conformance.Value == ConformanceClass.Enumtransitional)
                 {
-                    Console.WriteLine("--> Spreadsheet is Strict conformant");
-                    strict = true;
-                }
-                else if (workbook.Conformance == null || workbook.Conformance == "transitional")
-                {
-                    Console.WriteLine("--> Spreadsheet is Transitional conformant (Error)");
+                    Console.WriteLine("Error: Transitional conformance detected");
                     strict = false;
+                }
+                else if (workbook.Conformance.Value == ConformanceClass.Enumstrict)
+                {
+                    strict = true;
                 }
             }
             return strict;
@@ -78,10 +73,10 @@ namespace Validate.Spreadsheet
             {
                 //Check if worksheets exist
                 WorkbookPart wbPart = spreadsheet.WorkbookPart;
-                DocumentFormat.OpenXml.Spreadsheet.Sheets allSheets = wbPart.Workbook.Sheets;
+                Sheets allSheets = wbPart.Workbook.Sheets;
                 if (allSheets == null)
                 {
-                    Console.WriteLine("--> No cell values detected");
+                    Console.WriteLine("Error: No cell values detected");
                     return hascellvalue;
                 }
                 // Check if any cells have any value
@@ -94,12 +89,11 @@ namespace Validate.Spreadsheet
                     if (row_count > 0) // If any rows exist, this means cells exist
                     {
                         hascellvalue = true;
-                        Console.WriteLine("--> Cell values detected");
                         return hascellvalue;
                     }
                 }
             }
-            Console.WriteLine("--> No cell values detected");
+            Console.WriteLine("Error: No cell values detected");
             return hascellvalue;
         }
 
@@ -114,9 +108,13 @@ namespace Validate.Spreadsheet
                 if (conn != null)
                 {
                     conn_count = conn.Connections.Count();
+                    foreach (Connection c in conn.Connections)
+                    {
+                        Console.WriteLine($"Error: Data connection \"{c.NamespaceUri}\" detected");
+                    }
                 }
             }
-            Console.WriteLine($"--> {conn_count} data connections detected");
+            Console.WriteLine($"Error: In total {conn_count} data connections detected");
             return conn_count;
         }
 
@@ -147,6 +145,7 @@ namespace Validate.Spreadsheet
                                         foreach (var cell in cells)
                                         {
                                             cellreferences_count++;
+                                            Console.WriteLine($"Error: External cell reference detected");
                                         }
                                     }
                                 }
@@ -155,7 +154,7 @@ namespace Validate.Spreadsheet
                     }
                 }
             }
-            Console.WriteLine($"--> {cellreferences_count} external cell references detected");
+            Console.WriteLine($"Error: In total {cellreferences_count} external cell references detected");
             return cellreferences_count;
         }
 
@@ -180,13 +179,14 @@ namespace Validate.Spreadsheet
                                 foreach (OleLink oleLink in externalLink)
                                 {
                                     extobj_count++;
+                                    Console.WriteLine($"Error: External object \"{oleLink.NamespaceUri}\" detected");
                                 }
                             }
                         }
                     }
                 }
             }
-            Console.WriteLine($"--> {extobj_count} external objects detected");
+            Console.WriteLine($"Error: In total {extobj_count} external objects detected");
             return extobj_count;
         }
 
@@ -218,7 +218,7 @@ namespace Validate.Spreadsheet
                                     if (hit == "RTD")
                                     {
                                         rtd_functions_count++;
-                                        Console.WriteLine($"--> RTD function in sheet \"{aSheet.Name}\" cell {cell.CellReference} detected and removed");
+                                        Console.WriteLine($"Error: RTD function in sheet \"{aSheet.Name}\" cell {cell.CellReference} detected and removed");
                                     }
                                 }
                             }
@@ -226,7 +226,7 @@ namespace Validate.Spreadsheet
                     }
                 }
             }
-            Console.WriteLine($"--> {rtd_functions_count} RTD functions detected");
+            Console.WriteLine($"Error: In total {rtd_functions_count} RTD functions detected");
             return rtd_functions_count;
         }
 
@@ -247,7 +247,7 @@ namespace Validate.Spreadsheet
 
                     if (embedobj_count > 0) // If embedded objects
                     {
-                        Console.WriteLine($"--> {embedobj_count} embedded objects detected");
+                        Console.WriteLine($"{embedobj_count} embedded objects detected");
                         var embed_ole = item.EmbeddedObjectParts.ToList(); // Register each OLE to a list
                         var embed_image = item.ImageParts.ToList(); // Register each image to a list
                         var embed_3d = item.Model3DReferenceRelationshipParts.ToList(); // Register each 3D model to a list
@@ -255,29 +255,29 @@ namespace Validate.Spreadsheet
                         foreach (var part in embed_ole) // Inform user of each OLE object
                         {
                             embedobj_number++;
-                            Console.WriteLine($"--> Embedded object #{embedobj_number}");
-                            Console.WriteLine($"----> Content Type: {part.ContentType.ToString()}");
-                            Console.WriteLine($"----> URI: {part.Uri.ToString()}");
+                            Console.WriteLine($"Embedded object #{embedobj_number}");
+                            Console.WriteLine($"--> Content Type: {part.ContentType.ToString()}");
+                            Console.WriteLine($"--> URI: {part.Uri.ToString()}");
 
                         }
                         foreach (var part in embed_image) // Inform user of each image object
                         {
                             embedobj_number++;
-                            Console.WriteLine($"--> Embedded object #{embedobj_number}");
-                            Console.WriteLine($"----> Content Type: {part.ContentType.ToString()}");
-                            Console.WriteLine($"----> URI: {part.Uri.ToString()}");
+                            Console.WriteLine($"Embedded object #{embedobj_number}");
+                            Console.WriteLine($"--> Content Type: {part.ContentType.ToString()}");
+                            Console.WriteLine($"--> URI: {part.Uri.ToString()}");
                         }
                         foreach (var part in embed_3d) // Inform user of each 3D object
                         {
                             embedobj_number++;
-                            Console.WriteLine($"--> Embedded object #{embedobj_number}");
-                            Console.WriteLine($"----> Content Type: {part.ContentType.ToString()}");
-                            Console.WriteLine($"----> URI: {part.Uri.ToString()}");
+                            Console.WriteLine($"Embedded object #{embedobj_number}");
+                            Console.WriteLine($"--> Content Type: {part.ContentType.ToString()}");
+                            Console.WriteLine($"--> URI: {part.Uri.ToString()}");
                         }
                     }
                 }
             }
-            Console.WriteLine($"--> {embedobj_count} embedded objects detected");
+            Console.WriteLine($"{embedobj_count} embedded objects detected");
             return embedobj_count;
         }
 
@@ -296,10 +296,11 @@ namespace Validate.Spreadsheet
                 }
                 foreach (SpreadsheetPrinterSettingsPart printer in printerList)
                 {
+                    Console.WriteLine("Error: Printer setting detected");
                     printersettings_count++;
                 }
             }
-            Console.WriteLine($"--> {printersettings_count} printersettings detected");
+            Console.WriteLine($"Error: In total {printersettings_count} printersettings detected");
             return printersettings_count;
         }
 
@@ -317,13 +318,13 @@ namespace Validate.Spreadsheet
                     var activeSheetId = workbookView.ActiveTab.Value;
                     if (activeSheetId > 0)
                     {
-                        Console.WriteLine("--> First sheet is not active sheet detected");
+                        Console.WriteLine("Error: First sheet is not active sheet detected");
                         activeSheet = true;
                         return activeSheet;
                     }
                 }
             }
-            Console.WriteLine("--> First sheet is active sheet detected");
+            Console.WriteLine("First sheet is active sheet detected");
             return activeSheet;
         }
     }

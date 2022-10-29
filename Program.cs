@@ -7,146 +7,171 @@ using System.Runtime.InteropServices;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Validation;
+using CommandLine;
+using System.Diagnostics.Contracts;
 
 namespace Validate.Spreadsheet
 {
     class Program
     {
+        public class Options
+        {
+            [Option('i', "inputfilepath", Required = true, HelpText = "The input filepath.")]
+            public string InputFilepath { get; set; }
+
+            [Option('s', "standard", Required = false, HelpText = "Set to validate standard.")]
+            public bool Standard { get; set; }
+
+            [Option('a', "archivalrequirements", Required = false, HelpText = "Set to validate archival requirements.")]
+            public bool ArchivalRequirements { get; set; }
+        }
+
         public static int Main(string[] args)
         {
-            string filepath = args[0];
-            string extension = System.IO.Path.GetExtension(filepath);
-            int invalid = 0;
-            int valid = 1;
-            int fail = 2;
-            bool fileFormat_success = false;
-            bool archivalReq_success = false;
+            // Parse user arguments
+            var parser = new Parser(with => with.HelpWriter = null);
+            int exitcode = parser.ParseArguments<Options>(args).MapResult((opts) => RunApp(opts), errs => ShowHelp(errs));
+            return exitcode;
+        }
 
-            try
+        static int RunApp(Options arg)
+        {
+            int ExitCode, fail = 2;
+            bool fileFormat_success = false, archivalReq_success = false;
+
+            // Inform user of input filepath
+            Console.WriteLine($"Validating: {arg.InputFilepath}");
+
+            if (File.Exists(arg.InputFilepath))
             {
-                switch (extension) // The switch includes all accepted file extensions
+                try
                 {
-                    case ".fods":
-                    case ".FODS":
-                    case ".ods":
-                    case ".ODS":
-                    case ".ots":
-                    case ".OTS":
-                        // Inform user of input filepath
-                        Console.WriteLine("---");
-                        Console.WriteLine("VALIDATE");
-                        Console.WriteLine(filepath);
+                    string extension = Path.GetExtension(arg.InputFilepath);
+                    switch (extension) // The switch includes all accepted file extensions
+                    {
+                        case ".fods":
+                        case ".FODS":
+                        case ".ods":
+                        case ".ODS":
+                        case ".ots":
+                        case ".OTS":
+                            Validate_ODS ods = new Validate_ODS();
 
-                        // Validate file format standard
-                        Validate_ODS ods = new Validate_ODS();
-                        fileFormat_success = ods.Validate_Standard(filepath);
+                            if (arg.Standard == true)
+                            {
+                                // Validate file format standard
+                                fileFormat_success = ods.Validate_Standard(arg.InputFilepath);
+                            }
 
-                        // Validate archival requirements
-                        archivalReq_success = ods.Validate_ArchivalRequirements(filepath);
+                            if (arg.ArchivalRequirements == true)
+                            {
+                                // Validate archival requirements
+                                archivalReq_success = ods.Validate_ArchivalRequirements(arg.InputFilepath);
+                            }
 
-                        // Inform user of results
-                        Console.WriteLine("---");
-                        Console.WriteLine("SUMMARY");
-                        if (fileFormat_success == false)
-                        {
-                            Console.WriteLine("--> File format standard: Invalid");
-                        }
-                        else if (fileFormat_success == true)
-                        {
-                            Console.WriteLine("--> File format standard: Valid");
-                        }
+                            // Return exit code
+                            ExitCode = Program.ExitCode(arg, fileFormat_success, archivalReq_success);
+                            return ExitCode;
 
-                        if (archivalReq_success == false)
-                        {
-                            Console.WriteLine("--> Archival requirements: Invalid");
-                        }
-                        else if (archivalReq_success == true)
-                        {
-                            Console.WriteLine("--> Archival requirements: Valid");
-                        }
+                        case ".xlsb":
+                        case ".XLSB":
+                            // Inform user validation is not possible
+                            Console.WriteLine("Validation of .xlsb file format is not supported because of its binary structure");
+                            return fail;
 
-                        // Return validation code
-                        if (fileFormat_success == false || archivalReq_success == false)
-                        {
-                            return invalid;
-                        }
-                        else if (fileFormat_success == true && archivalReq_success == true)
-                        {
-                            return valid;
-                        }
-                        return fail;
+                        case ".xlsm":
+                        case ".XLSM":
+                        case ".xlsx":
+                        case ".XLSX":
+                        case ".xltm":
+                        case ".XLTM":
+                        case ".xltx":
+                        case ".XLTX":
+                            Validate_ODS xlsx = new Validate_ODS();
 
-                    case ".xlsb":
-                    case ".XLSB":
-                    case ".xlsm":
-                    case ".XLSM":
-                    case ".xlsx":
-                    case ".XLSX":
-                    case ".xltm":
-                    case ".XLTM":
-                    case ".xltx":
-                    case ".XLTX":
-                        // Inform user of input filepath
-                        Console.WriteLine("---");
-                        Console.WriteLine("VALIDATE");
-                        Console.WriteLine(filepath);
+                            if (arg.Standard == true)
+                            {
+                                // Validate file format standard
+                                fileFormat_success = xlsx.Validate_Standard(arg.InputFilepath);
+                            }
 
-                        // Validate file format standard
-                        Validate_XLSX xlsx = new Validate_XLSX();
-                        fileFormat_success = xlsx.Validate_Standard(filepath);
+                            if (arg.ArchivalRequirements == true)
+                            {
+                                // Validate archival requirements
+                                archivalReq_success = xlsx.Validate_ArchivalRequirements(arg.InputFilepath);
+                            }
 
-                        // Validate archival requirements
-                        archivalReq_success = xlsx.Validate_ArchivalRequirements(filepath);
+                            // Return exit code
+                            ExitCode = Program.ExitCode(arg, fileFormat_success, archivalReq_success);
+                            return ExitCode;
 
-                        // Inform user of results
-                        Console.WriteLine("---");
-                        Console.WriteLine("SUMMARY");
-                        if (fileFormat_success == false)
-                        {
-                            Console.WriteLine("--> File format standard: Invalid");
-                        }
-                        else if (fileFormat_success == true)
-                        {
-                            Console.WriteLine("--> File format standard: Valid");
-                        }
-
-                        if (archivalReq_success == false)
-                        {
-                            Console.WriteLine("--> Archival requirements: Invalid");
-                        }
-                        else if (archivalReq_success == true)
-                        {
-                            Console.WriteLine("--> Archival requirements: Valid");
-                        }
-
-                        // Return validation code
-                        if (fileFormat_success == false || archivalReq_success == false)
-                        {
-                            Console.WriteLine("--> Spreadsheet is invalid");
-                            return invalid;
-                        }
-                        else if (fileFormat_success == true && archivalReq_success == true)
-                        {
-                            Console.WriteLine("--> Spreadsheet is valid");
-                            return valid;
-                        }
-                        return fail;
-
-                    default:
-                        Console.WriteLine("File format is not an accepted file format");
-                        return fail;
+                        default:
+                            Console.WriteLine("File format is not an accepted file format");
+                            return fail;
+                    }
+                }
+                // If spreadsheet is password protected or otherwise unreadable
+                catch (FormatException) 
+                {
+                    Console.WriteLine("File cannot be read");
+                    return fail;
                 }
             }
-            catch (FileNotFoundException) // If filepath has not file
+            // If filepath has no file
+            else
             {
                 Console.WriteLine("No file in filepath");
                 return fail;
             }
-            catch (FormatException) // If spreadsheet is password protected or otherwise unreadable
+        }
+
+        // Provide exit code
+        static int ExitCode(Options arg, bool fileFormat_success, bool archivalReq_success)
+        {
+            int invalid = 0, valid = 1, fail = 2;
+            if (arg.Standard == true && arg.ArchivalRequirements == true)
             {
-                Console.WriteLine("File cannot be read");
-                return fail;
+                if (fileFormat_success == false || archivalReq_success == false)
+                {
+                    return invalid;
+                }
+                else if (fileFormat_success == true && archivalReq_success == true)
+                {
+                    return valid;
+                }
             }
+            else if (arg.Standard == true && arg.ArchivalRequirements == false)
+            {
+                if (fileFormat_success == false)
+                {
+                    return invalid;
+                }
+                else if (fileFormat_success == true)
+                {
+                    return valid;
+                }
+            }
+            else if (arg.Standard == false && arg.ArchivalRequirements == true)
+            {
+                if (archivalReq_success == false)
+                {
+                    return invalid;
+                }
+                else if (archivalReq_success == true)
+                {
+                    return valid;
+                }
+            }
+            Console.WriteLine("No validation arguments were input");
+            return fail;
+        }
+
+        // Show help to user, if parsing arguments fail
+        static int ShowHelp(IEnumerable<Error> errs)
+        {
+            int fail = 2;
+            Console.WriteLine("Input arguments have errors");
+            return fail;
         }
     }
 }

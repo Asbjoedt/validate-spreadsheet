@@ -1,7 +1,9 @@
 # validate-spreadsheet
-The program validates any .xlsx or .ods spreadsheet filepath according to the their file format standards and according to [archival data quality specifications](https://github.com/Asbjoedt/CLISC/wiki/Archival-Data-Quality)[^1]. It can be used in simple archival workflows.
+The program validates any .xlsx or .ods spreadsheet filepath according to the their file format standards and according to [archival data quality specifications](https://github.com/Asbjoedt/CLISC/wiki/Archival-Data-Quality). It can be used in simple archival workflows.
 
 * For more information, see repository **[CLISC](https://github.com/Asbjoedt/CLISC)**
+
+**Important!** The program supports validation of .xlsx file format standard and archival data quality specifications. For ods. the program currently only supports validation of file format standard. I am looking into how to support validation of archival data quality specifications.
 
 ## Dependencies
 :warning: **[ODF Validator 0.10.0](https://odftoolkit.org/conformance/ODFValidator.html)**
@@ -12,7 +14,14 @@ The program validates any .xlsx or .ods spreadsheet filepath according to the th
 ## How to use
 Download the executable version [here](https://github.com/Asbjoedt/validate-spreadsheet/releases). There's no need to install. In your terminal change directory to the folder where validate-spreadsheet.exe is. Then, to execute the program input:
 ```
-.\validate-spreadsheet.exe "[filepath]"
+.\validate-spreadsheet.exe inputfilepath="[filepath]"
+```
+
+**Optional parameters**
+
+```
+--standard // If you want to validate the file format standard
+--archivalrequirements // If you want to validate archival data quality specifications
 ```
 
 **Exit codes**
@@ -28,5 +37,3 @@ The program writes information to the terminal and it also returns an exit code 
 The following packages and software are used under license.
 * [ODF Validator 0.10.0](https://odftoolkit.org/conformance/ODFValidator.html), Apache License, [copyright info](https://github.com/tdf/odftoolkit/blob/master/NOTICE)
 * [Open XML SDK](https://github.com/OfficeDev/Open-XML-SDK), MIT License, Copyright (c) Microsoft Corporation
-
-[^1]: The program supports validation of .xlsx file format standard and archival data quality specifications. For ods. the program currently only supports validation of file format standard.
