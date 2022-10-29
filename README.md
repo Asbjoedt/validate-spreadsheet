@@ -17,12 +17,14 @@ Download the executable version [here](https://github.com/Asbjoedt/validate-spre
 .\validate-spreadsheet.exe "[filepath]"
 ```
 
-**Return codes**
+**Exit codes**
 
-The program writes information to the console and it also returns a code to integrate in workflows.
-* 0 = spreadsheet is invalid
-* 1 = spreadsheet is valid
-* 2 = program error occured (e.g. file format is not a spreadsheet file format or ODF Validator was not found)
+The program writes information to the terminal and it also returns an exit code to integrate in workflows.
+```
+0 = spreadsheet is invalid
+1 = spreadsheet is valid
+2 = program error occured (e.g. file format is not a spreadsheet file format or ODF Validator was not found)
+```
 
 ## Packages and software
 The following packages and software are used under license.
