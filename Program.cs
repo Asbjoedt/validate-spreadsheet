@@ -1,14 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Validation;
 using CommandLine;
-using System.Diagnostics.Contracts;
 
 namespace Validate.Spreadsheet
 {
@@ -87,7 +80,7 @@ namespace Validate.Spreadsheet
                         case ".XLTM":
                         case ".xltx":
                         case ".XLTX":
-                            Validate_ODS xlsx = new Validate_ODS();
+                            Validate_XLSX xlsx = new Validate_XLSX();
 
                             if (arg.Standard == true)
                             {
@@ -111,7 +104,17 @@ namespace Validate.Spreadsheet
                     }
                 }
                 // If spreadsheet is password protected or otherwise unreadable
-                catch (FormatException) 
+                catch (System.FormatException) 
+                {
+                    Console.WriteLine("File cannot be read");
+                    return fail;
+                }
+                catch (System.IO.InvalidDataException)
+                {
+                    Console.WriteLine("File cannot be read");
+                    return fail;
+                }
+                catch(DocumentFormat.OpenXml.Packaging.OpenXmlPackageException)
                 {
                     Console.WriteLine("File cannot be read");
                     return fail;

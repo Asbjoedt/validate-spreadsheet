@@ -21,7 +21,7 @@ namespace Validate.Spreadsheet
             bool strict = Check_Conformance(filepath);
             bool data = Check_Value(filepath);
             int conn = Check_DataConnections(filepath);
-            int cellrefs = Check_CellReferences(filepath);
+            int cellrefs = Check_ExternalCellReferences(filepath);
             int extobjs = Check_ExternalObjects(filepath);
             int rtdfunctions = Check_RTDFunctions(filepath);
             int printersettings = Check_PrinterSettings(filepath);
@@ -110,52 +110,53 @@ namespace Validate.Spreadsheet
                     conn_count = conn.Connections.Count();
                     foreach (Connection c in conn.Connections)
                     {
-                        Console.WriteLine($"Error: Data connection \"{c.NamespaceUri}\" detected");
+                        Console.WriteLine($"Error: Data connection \"{c.Name}\" detected");
                     }
                 }
             }
-            Console.WriteLine($"Error: In total {conn_count} data connections detected");
+            if (conn_count > 0)
+            {
+                Console.WriteLine($"In total {conn_count} data connections detected");
+            }
             return conn_count;
         }
 
         // Check for external relationships
-        static int Check_CellReferences(string filepath) // Find all external relationships
+        static int Check_ExternalCellReferences(string filepath) // Find all external relationships
         {
-            int cellreferences_count = 0;
+            int ext_cellrefs_count = 0;
 
             using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(filepath, false))
             {
-                List<ExternalWorkbookPart> extwbParts = spreadsheet.WorkbookPart.ExternalWorkbookParts.ToList();
-                if (extwbParts.Count > 0)
+                IEnumerable<ExternalWorkbookPart> extWbParts = spreadsheet.WorkbookPart.ExternalWorkbookParts;
+                foreach (ExternalWorkbookPart extWbPart in extWbParts)
                 {
-                    foreach (ExternalWorkbookPart ext in extwbParts)
+                    List<ExternalBook> extBook = extWbPart.ExternalLink.Elements<ExternalBook>().ToList();
+                    foreach (ExternalBook externalBook in extBook)
                     {
-                        var elements = ext.ExternalLink.ChildElements.ToList();
-                        foreach (var element in elements)
+                        List<ExternalSheetData> extSheetdata = externalBook.SheetDataSet.Elements<ExternalSheetData>().ToList();
+                        foreach (ExternalSheetData externalSheetdata in extSheetdata)
                         {
-                            if (element.LocalName == "externalBook")
+                            List<ExternalRow> extRows = externalSheetdata.Elements<ExternalRow>().ToList();
+                            foreach (ExternalRow externalRow in extRows)
                             {
-                                var externalLink = ext.ExternalLink.ToList();
-                                foreach (ExternalBook externalBook in externalLink)
+                                List<ExternalCell> externalCells = externalRow.Elements<ExternalCell>().ToList();
+                                foreach (ExternalCell externalCell in externalCells)
                                 {
-                                    var cellreferences = externalBook.SheetDataSet.ChildElements.ToList();
-                                    foreach (var cellreference in cellreferences)
-                                    {
-                                        var cells = cellreference.InnerText.ToList();
-                                        foreach (var cell in cells)
-                                        {
-                                            cellreferences_count++;
-                                            Console.WriteLine($"Error: External cell reference detected");
-                                        }
-                                    }
+                                    ext_cellrefs_count++;
+                                    Console.WriteLine($"Error: External cell reference in sheet \"{externalSheetdata.SheetId}\" cell \"{externalCell.CellReference}\" detected");
                                 }
+
                             }
                         }
                     }
                 }
             }
-            Console.WriteLine($"Error: In total {cellreferences_count} external cell references detected");
-            return cellreferences_count;
+            if (ext_cellrefs_count > 0)
+            {
+                Console.WriteLine($"In total {ext_cellrefs_count} external cell references detected");
+            }
+            return ext_cellrefs_count;
         }
 
         // Check for external object references
@@ -165,28 +166,29 @@ namespace Validate.Spreadsheet
 
             using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(filepath, false))
             {
-                List<ExternalWorkbookPart> extwbParts = spreadsheet.WorkbookPart.ExternalWorkbookParts.ToList();
-                if (extwbParts.Count > 0)
+                IEnumerable<ExternalWorkbookPart> extwbParts = spreadsheet.WorkbookPart.ExternalWorkbookParts;
+                foreach (ExternalWorkbookPart ext in extwbParts)
                 {
-                    foreach (ExternalWorkbookPart ext in extwbParts)
+                    var elements = ext.ExternalLink.ChildElements.ToList();
+                    foreach (var element in elements)
                     {
-                        var elements = ext.ExternalLink.ChildElements.ToList();
-                        foreach (var element in elements)
+                        if (element.LocalName == "oleLink")
                         {
-                            if (element.LocalName == "oleLink")
+                            var externalLink = ext.ExternalLink.ToList();
+                            foreach (OleLink oleLink in externalLink)
                             {
-                                var externalLink = ext.ExternalLink.ToList();
-                                foreach (OleLink oleLink in externalLink)
-                                {
-                                    extobj_count++;
-                                    Console.WriteLine($"Error: External object \"{oleLink.NamespaceUri}\" detected");
-                                }
+
+                                extobj_count++;
+                                Console.WriteLine($"Error: External object \"{oleLink.Id}\" detected");
                             }
                         }
                     }
                 }
             }
-            Console.WriteLine($"Error: In total {extobj_count} external objects detected");
+            if (extobj_count > 0)
+            {
+                Console.WriteLine($"In total {extobj_count} external objects detected");
+            }            
             return extobj_count;
         }
 
@@ -226,7 +228,10 @@ namespace Validate.Spreadsheet
                     }
                 }
             }
-            Console.WriteLine($"Error: In total {rtd_functions_count} RTD functions detected");
+            if (rtd_functions_count > 0)
+            {
+                Console.WriteLine($"In total {rtd_functions_count} RTD functions detected");
+            }
             return rtd_functions_count;
         }
 
@@ -277,7 +282,10 @@ namespace Validate.Spreadsheet
                     }
                 }
             }
-            Console.WriteLine($"{embedobj_count} embedded objects detected");
+            if (embedobj_count > 0) 
+            {
+                Console.WriteLine($"In total {embedobj_count} embedded objects detected");
+            }
             return embedobj_count;
         }
 
@@ -296,11 +304,14 @@ namespace Validate.Spreadsheet
                 }
                 foreach (SpreadsheetPrinterSettingsPart printer in printerList)
                 {
-                    Console.WriteLine("Error: Printer setting detected");
+                    Console.WriteLine($"Error: Printer setting \"{printer.Uri}\" detected");
                     printersettings_count++;
                 }
             }
-            Console.WriteLine($"Error: In total {printersettings_count} printersettings detected");
+            if (printersettings_count > 0)
+            {
+                Console.WriteLine($"In total {printersettings_count} printersettings detected");
+            }
             return printersettings_count;
         }
 
@@ -324,7 +335,6 @@ namespace Validate.Spreadsheet
                     }
                 }
             }
-            Console.WriteLine("First sheet is active sheet detected");
             return activeSheet;
         }
     }

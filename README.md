@@ -12,7 +12,7 @@ The program validates any .xlsx or .ods spreadsheet filepath according to the th
 ## How to use
 Download the executable version [here](https://github.com/Asbjoedt/validate-spreadsheet/releases). There's no need to install. In your terminal change directory to the folder where validate-spreadsheet.exe is. Then, to execute the program input:
 ```
-.\validate-spreadsheet.exe --inputfilepath="[filepath]"
+.\validate-spreadsheet.exe --inputfilepath "[filepath]"
 ```
 
 **Optional parameters**
