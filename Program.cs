@@ -39,8 +39,8 @@ namespace Validate.Spreadsheet
             {
                 try
                 {
-                    string extension = Path.GetExtension(arg.InputFilepath);
-                    switch (extension.ToLower()) // The switch includes all accepted file extensions
+                    string extension = Path.GetExtension(arg.InputFilepath).ToLower();
+                    switch (extension) // The switch includes all accepted file extensions
                     {
                         case ".fods":
                         case ".ods":
