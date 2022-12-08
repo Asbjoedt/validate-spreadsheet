@@ -40,14 +40,11 @@ namespace Validate.Spreadsheet
                 try
                 {
                     string extension = Path.GetExtension(arg.InputFilepath);
-                    switch (extension) // The switch includes all accepted file extensions
+                    switch (extension.ToLower()) // The switch includes all accepted file extensions
                     {
                         case ".fods":
-                        case ".FODS":
                         case ".ods":
-                        case ".ODS":
                         case ".ots":
-                        case ".OTS":
                             Validate_ODS ods = new Validate_ODS();
 
                             if (arg.Standard == true)
@@ -67,19 +64,14 @@ namespace Validate.Spreadsheet
                             return ExitCode;
 
                         case ".xlsb":
-                        case ".XLSB":
                             // Inform user validation is not possible
                             Console.WriteLine("Validation of .xlsb file format is not supported because of its binary structure");
                             return fail;
 
                         case ".xlsm":
-                        case ".XLSM":
                         case ".xlsx":
-                        case ".XLSX":
                         case ".xltm":
-                        case ".XLTM":
                         case ".xltx":
-                        case ".XLTX":
                             Validate_XLSX xlsx = new Validate_XLSX();
 
                             if (arg.Standard == true)
