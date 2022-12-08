@@ -11,7 +11,8 @@
     <Copyright>Asbjørn Skødt</Copyright>
     <RepositoryUrl>https://github.com/Asbjoedt/validate-spreadsheet</RepositoryUrl>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>G:\Mit drev\Diverse\Signing keys\My programs\validate-spreadsheet.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>G:\Mit drev\Diverse\Keys\Signing keys for my programs\validate-spreadsheet.snk</AssemblyOriginatorKeyFile>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
