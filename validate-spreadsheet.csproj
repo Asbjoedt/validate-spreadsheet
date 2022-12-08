@@ -6,6 +6,12 @@
     <RootNamespace>validate_spreadsheet</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Authors>Asbjørn Skødt</Authors>
+    <Company />
+    <Copyright>Asbjørn Skødt</Copyright>
+    <RepositoryUrl>https://github.com/Asbjoedt/validate-spreadsheet</RepositoryUrl>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>G:\Mit drev\Diverse\Signing keys\My programs\validate-spreadsheet.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
